@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1> <span style="background-color:rgb(255, 255, 255)">
+Movie Review Sentiment by Matthew Inglis-Whalen
+</span> </h1>
+<p>
+<span style="background-color:#00FF00"> Good </span>
+<span style="background-color:#AAFFAA"> Okay </span> 
+<span style="background-color:#FFFFFF"> Neutral </span> 
+<span style="background-color:#FF7777"> Bad </span> 
+<span style="background-color:#FF0000"> Terrible </span> 
+</p>
+
+<textarea id = "text_area" rows="20" cols="80" placeholder="Write a review here!"></textarea>
+
+<div id="demo">
+<p>Click the button below to have your review rated by a machine learning algorithm!</p>
+<button type="button" onclick="send_post_request()">Get Sentiment</button>
+</div>
+
+<div id="responses">
+<p>No requests yet</p>
+</div>
+
+<script>
+var review_history = "";
+
+function send_post_request() {
+
+  const data = document.getElementById("text_area").value;
+
+  const xhttp = new XMLHttpRequest();
+  xhttp.open("POST", "/predict");
+  xhttp.setRequestHeader("Content-Type", "application/json");
+  xhttp.onload = function() {
+    review_history = xhttp.responseText + "--------------------------------------------" + review_history
+    document.getElementById("responses").innerHTML = review_history;
+  }
+  xhttp.send(data);
+}
+</script>
+
+</body>
+</html>

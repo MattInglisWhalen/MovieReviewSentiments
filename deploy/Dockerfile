@@ -1,4 +1,5 @@
 FROM python:3.9-slim
+COPY ./MovieReviewSentiment.html /deploy_net/
 COPY ./MovieReviewSentiment_app.py /deploy_net/
 COPY ./requirements.txt /deploy_net/
 COPY ./sentiment_inference_model_hashed.pkl /deploy_net/
