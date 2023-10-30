@@ -9,57 +9,6 @@ expected_request_origin = "https://mattingliswhalen.github.io"
 app = Flask(__name__)
 
 header = ""
-#
-# header = """
-# <!DOCTYPE html>
-# <html>
-# <body>
-#
-# <h1> <span style="background-color:rgb(255, 255, 255)">
-# Movie Review Sentiment by Matthew Inglis-Whalen
-# </span> </h1>
-# <p>
-# <span style="background-color:#00FF00"> Good </span>
-# <span style="background-color:#AAFFAA"> Okay </span>
-# <span style="background-color:#FFFFFF"> Neutral </span>
-# <span style="background-color:#FF7777"> Bad </span>
-# <span style="background-color:#FF0000"> Terrible </span>
-# </p>
-#
-# <textarea id = "text_area" rows="20" cols="80" placeholder="Write a review here!"></textarea>
-#
-# <div id="demo">
-# <p>Click the button below to have your review rated by a machine learning algorithm!</p>
-# <button type="button" onclick="send_post_request()">Get Sentiment</button>
-# </div>
-#
-# <div id="responses">
-# <p>No requests yet</p>
-# </div>
-#
-# <script>
-# var review_history = "";
-#
-# function send_post_request() {
-#
-#   const data = document.getElementById("text_area").value;
-#
-#   const xhttp = new XMLHttpRequest();
-#   xhttp.open("POST", "/predict");
-#   xhttp.setRequestHeader("Content-Type", "application/json");
-#   xhttp.onload = function() {
-#     review_history = xhttp.responseText + "--------------------------------------------" + review_history
-#     document.getElementById("responses").innerHTML = review_history;
-#   }
-#   xhttp.send(data);
-# }
-# </script>
-#
-# </body>
-# </html>
-#
-# """
-
 empty_star = "✰"
 filled_star = "★"
 
@@ -83,7 +32,7 @@ def prob_to_html(r: float) -> str :
     return return_str
 
 def strength_to_color_string(strength: float, min_str: float, max_str: float) -> str :
-    """Returns a color choice as a string in the format #XXXXXX.
+    """Returns a color choice as a string in the format #XXYYZZ.
         Very green for high positive strength, very red for high negative strength"""
     strength = max(min_str, min(max_str, strength))  # clamp strength to min < strength < max
     color_str = "#"
@@ -98,7 +47,7 @@ def strength_to_color_string(strength: float, min_str: float, max_str: float) ->
     return color_str
 
 def strength_gram(*words) :
-    """Turns a list of words into a strength based on logistic regression coefficient of that 2gram"""
+    """Turns a list of words into a strength based on logistic regression coefficient of all possible n-grams"""
     bag_of_words = vocab.fit_transform([' '.join(list(words))])
 
     # the following will give 3 entries: 1 for the 2 1-grams and 1 for the 2-gram
@@ -146,6 +95,7 @@ def reasoning_html_from_string(data: str) -> str :
     return reasoning_str
 
 def sanitize(data_str : bytes) -> str :
+    """Cleans the user-input raw text to escape nefarious actions"""
     cleaned_str = ""
 
     word_str = data_str.decode()
@@ -190,6 +140,7 @@ def sanitize(data_str : bytes) -> str :
     return cleaned_str
 
 def load_frontend():
+    """To be used on boot; loads header from html"""
     global header
     with open('MovieReviewSentiment.html', 'r') as f_html:
         header = f_html.read()
@@ -215,7 +166,9 @@ def home_endpoint():
 @app.route('/predict', methods=['POST','OPTIONS'])
 def get_prediction():
     """Locally: what to show when receiving a post request at localhost:80/predict"""
-    """>  curl.exe -X POST localhost:80/predict -H 'Content-Type: application/json' -d 'This is a review' """
+    # Usage:
+    # >  curl.exe -X POST localhost:80/predict -H 'Content-Type: application/json' -d 'This is a review'
+
     # Works only for a single sample
     if request.method == 'POST':
         data = sanitize(request.get_data())  # Get data posted as a string

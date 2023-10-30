@@ -14,7 +14,7 @@ In what follows I'll give an overview of the steps involved:
 3. Deploying the model to a server (AWS EC2-instance micro)
 4. Setting up interactivity
 
-### 1. A Bag of Words
+## 1. A Bag of Words
 
 The first step in converting a block of text into a machine-readable format
 is to "tokenize" each important chunk of the string. The simplest thing you 
