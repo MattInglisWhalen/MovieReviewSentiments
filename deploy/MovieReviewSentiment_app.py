@@ -2,24 +2,30 @@ import pickle
 from flask import Flask, request
 import re as regex
 
-vocab = None  # HashingVectorizer
-model = None  # LogisticRegression
 
-expected_request_origin = "https://mattingliswhalen.github.io"
-app = Flask(__name__)
+if __name__ == "__main__" :
+    app = Flask(__name__)
+    mrs_dir = ""
+else :
+    from __main__ import app
+    mrs_dir = "deploy_mrs"
 
-header = ""
-empty_star = "✰"
-filled_star = "★"
 
-def prob_to_html(r: float) -> str :
+mrs_vocab = None  # HashingVectorizer
+mrs_model = None  # LogisticRegression
+mrs_header = ""
+
+EMPTY_STAR = "✰"
+FILLED_STAR = "★"
+
+def mrs_prob_to_html(r: float) -> str :
     """Presents the model's predicted probability as html markup"""
     return_str = "<p> Predicted stars: "
     for n in range(10) :
         if n/10 + 0.05 < r :
-            return_str += filled_star
+            return_str += FILLED_STAR
         else :
-            return_str += empty_star
+            return_str += EMPTY_STAR
 
     return_str += "</p> <p>Sentiment: "
     if r < 0.25 :
@@ -31,7 +37,7 @@ def prob_to_html(r: float) -> str :
     return_str += "</p>"
     return return_str
 
-def strength_to_color_string(strength: float, min_str: float, max_str: float) -> str :
+def mrs_strength_to_color_string(strength: float, min_str: float, max_str: float) -> str :
     """Returns a color choice as a string in the format #XXYYZZ.
         Very green for high positive strength, very red for high negative strength"""
     strength = max(min_str, min(max_str, strength))  # clamp strength to min < strength < max
@@ -46,9 +52,9 @@ def strength_to_color_string(strength: float, min_str: float, max_str: float) ->
         color_str += "%0.2X" % int( (max_str-strength)/max_str * 255)   # blue
     return color_str
 
-def strength_gram(*words) :
+def mrs_strength_gram(*words) :
     """Turns a list of words into a strength based on logistic regression coefficient of all possible n-grams"""
-    bag_of_words = vocab.fit_transform([' '.join(list(words))])
+    bag_of_words = mrs_vocab.fit_transform([' '.join(list(words))])
 
     # the following will give 3 entries: 1 for the 2 1-grams and 1 for the 2-gram
     _, indices = bag_of_words.nonzero()
@@ -56,11 +62,11 @@ def strength_gram(*words) :
     for idx in indices :
         bag_val = bag_of_words[0,idx]
         sign = bag_val / abs(bag_val) if abs(bag_val) > 1e-10 else 0
-        net_strength += sign * model.coef_[0, idx]
+        net_strength += sign * mrs_model.coef_[0, idx]
 
     return net_strength
 
-def reasoning_html_from_string(data: str) -> str :
+def mrs_reasoning_html_from_string(data: str) -> str :
     """Returns html markup containing the data string with coloring based on model coefficients"""
     reasoning_str = "<p> Reasoning: "
     # min_str, max_str = min(model.coef_[0]), max(model.coef_[0])
@@ -71,12 +77,12 @@ def reasoning_html_from_string(data: str) -> str :
 
     for n, (prev_word, this_word, next_word) in enumerate( zip(data_list[:-2],data_list[1:-1],data_list[2:])):
 
-        str_prev = strength_gram(prev_word)
-        str_this = strength_gram(this_word)
-        str_next = strength_gram(next_word)
+        str_prev = mrs_strength_gram(prev_word)
+        str_this = mrs_strength_gram(this_word)
+        str_next = mrs_strength_gram(next_word)
 
-        str_2gram_left = strength_gram(prev_word,this_word) - str_prev - str_this
-        str_2gram_right = strength_gram(this_word,next_word) - str_this - str_next
+        str_2gram_left = mrs_strength_gram(prev_word, this_word) - str_prev - str_this
+        str_2gram_right = mrs_strength_gram(this_word, next_word) - str_this - str_next
 
         if n == 0 :
             str_2gram_left = (str_this + str_2gram_right)/2
@@ -86,15 +92,15 @@ def reasoning_html_from_string(data: str) -> str :
         net_strength = (str_2gram_left + str_this + str_2gram_right)/3
 
         reasoning_str += f"""<span style = "background-color:"""
-        reasoning_str += f"""{strength_to_color_string(net_strength,min_str,max_str)}">{this_word}</span>"""
+        reasoning_str += f"""{mrs_strength_to_color_string(net_strength, min_str, max_str)}">{this_word}</span>"""
         reasoning_str += f"""<span style = "background-color:"""
-        reasoning_str += f"""{strength_to_color_string(str_2gram_right,min_str,max_str)}"> </span>\n"""
+        reasoning_str += f"""{mrs_strength_to_color_string(str_2gram_right, min_str, max_str)}"> </span>\n"""
         if n % 12 == 11 :
             reasoning_str += "<br>"
     reasoning_str += "</p>"
     return reasoning_str
 
-def sanitize(data_str : bytes) -> str :
+def mrs_sanitize(data_str : bytes) -> str :
     """Cleans the user-input raw text to escape nefarious actions"""
     cleaned_str = ""
 
@@ -139,48 +145,56 @@ def sanitize(data_str : bytes) -> str :
 
     return cleaned_str
 
-def load_frontend():
+def mrs_load_frontend():
     """To be used on boot; loads header from html"""
-    global header
-    with open('MovieReviewSentiment.html', 'r') as f_html:
-        header = f_html.read()
+    global mrs_header
+    with open(mrs_dir+'MovieReviewSentiment.html', 'r') as f_html:
+        mrs_header = f_html.read()
 
-def load_model():
+def mrs_load_model():
     """Load the stored inference model and vocabulary"""
-    global vocab
-    global model
+    global mrs_vocab
+    global mrs_model
 
-    with open('vocabulary_hashed.pkl', 'rb') as f_v:
-        vocab = pickle.load(f_v)
-    with open('sentiment_inference_model_hashed.pkl', 'rb') as f_m:
-        model = pickle.load(f_m)
+    with open(mrs_dir+'vocabulary_hashed.pkl', 'rb') as f_v:
+        mrs_vocab = pickle.load(f_v)
+    with open(mrs_dir+'sentiment_inference_model_hashed.pkl', 'rb') as f_m:
+        mrs_model = pickle.load(f_m)
 
 
-@app.route('/')
-def home_endpoint():
+if __name__ == "__main__" :
+    @app.route('/')
+    def home_endpoint():
+        """Locally: what to show when visiting localhost:80"""
+        return """Please visit <a href="localhost:80/mrs_demo" target="_blank">
+                  the Movie Review Sentiment demo page</a>"""
+
+
+@app.route('/mrs_demo')
+def mrs_demo():
     """Locally: what to show when visiting localhost:80"""
-    return header
+    return mrs_header
 
 # ssh -i C:\Users\Matt\Documents\AWS\AWS_DEPLOYED_MODELS.pem ec2-user@18.216.26.152
 # scp -i C:\Users\Matt\Documents\AWS\AWS_DEPLOYED_MODELS.pem files ec2-user@18.216.26.152:/home/ec2-user
-@app.route('/predict', methods=['POST','OPTIONS'])
-def get_prediction():
+@app.route('/mrs_demo/request', methods=['POST','OPTIONS'])
+def mrs_demo_prediction():
     """Locally: what to show when receiving a post request at localhost:80/predict"""
     # Usage:
     # >  curl.exe -X POST localhost:80/predict -H 'Content-Type: application/json' -d 'This is a review'
 
     # Works only for a single sample
     if request.method == 'POST':
-        data = sanitize(request.get_data())  # Get data posted as a string
-        transformed_data = vocab.transform([data])  # Transform the input string with the HasheVectorizer
-        sentiment = model.predict_proba(transformed_data)[0,1]  # Runs globally-loaded model on the data
-        return prob_to_html(sentiment) + reasoning_html_from_string(data)
+        data = mrs_sanitize(request.get_data())  # Get data posted as a string
+        transformed_data = mrs_vocab.transform([data])  # Transform the input string with the HashedVectorizer
+        sentiment = mrs_model.predict_proba(transformed_data)[0, 1]  # Runs globally-loaded model on the data
+        return mrs_prob_to_html(sentiment) + mrs_reasoning_html_from_string(data)
     else :
         raise RuntimeError(f"Can't handle >{request.method}< request method")
 
 
 if __name__ == '__main__':
-    load_frontend()  # load html for the user-facing site
-    load_model()  # load model at the beginning once only
+    mrs_load_frontend()  # load html for the user-facing site
+    mrs_load_model()  # load model at the beginning once only
     app.run(host='0.0.0.0', port=80)
 

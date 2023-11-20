@@ -32,7 +32,7 @@ function send_post_request() {
   const data = document.getElementById("text_area").value;
 
   const xhttp = new XMLHttpRequest();
-  xhttp.open("POST", "/predict");
+  xhttp.open("POST", "/mrs_demo/request");
   xhttp.setRequestHeader("Content-Type", "application/json");
   xhttp.onload = function() {
     review_history = xhttp.responseText + "--------------------------------------------" + review_history
