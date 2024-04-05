@@ -1,6 +1,6 @@
 # Movie Review Sentiments by Matt Inglis-Whalen
 
-![Sample output about The Prestige, from Roger Ebert's review](prestige.png)
+![Sample output about The Prestige, from Roger Ebert's review](images/prestige.png)
 
 This project is my first step towards building an interactive portfolio.
 The goal is simple: from a common dataset conisting of 50k Netflix reviews,
@@ -89,13 +89,13 @@ where $f_0$ is the probability at the far-left of the distribution,
 $f_0 + H$ is the probability at the far-right, $x_0$ is where the probability 
 increases the quickest, and $w$ is the "transition width".
 
-![A simple logistic function](s-curve.png)
+![A simple logistic function](images/s-curve.png)
 
 With lots of data you expect to find a distribution similar to this logistic
 function when plotting the probability of a good review versus the relative
 frequency of a particular word appearing
 
-![Data about the word 'Amazing'](amazing_freq_prob.png)
+![Data about the word 'Amazing'](images/amazing_freq_prob.png)
 
 The scikit-learn `Logistic Regression` fits these types of curves 
 for all the tokenized words that appear in the 50K reviews. Below
