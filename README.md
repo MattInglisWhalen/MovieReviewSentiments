@@ -50,7 +50,7 @@ get its own token. This is important for situations like the string "not great",
 positive word, while the two together "not great" is moderately negative. I
 chose to have my vocabulary include only 1- and 2-word tokens.
 
-My first instinct was to use the TfidfVectorizer to implement the bag-of-words
+My first instinct was to use the `TfidfVectorizer` to implement the bag-of-words
 model. This scikit-learn class is a combination of the CountVectorizer, which
 counts the number of tokens in a review as described above, but also uses
 the "Term Frequency x Inverse Document Frequency" to normalize the counts of each
@@ -153,7 +153,7 @@ tokenize each single- and double-word in the review string, then ask the
 `LinearRegression` model for the "Importance" of that token. Since positive
 importances are associated with words that are more likely to give good reviews,
 these positive importances are colored green with a saturation equal to 
-the importance over the maximum importance. Negatively important words are similarlu
+the importance over the maximum importance. Negatively important words are similarly
 colored red. And the color in the whitespace between each word represents the
 importance of the bigram formed from the two words.
 
